@@ -5,7 +5,7 @@ Tags: Elementor,Beaver Builder,Templates,Gutenberg,Astra Starter Sites
 Requires at least: 4.4
 Requires PHP: 5.3
 Tested up to: 5.4
-Stable tag: 2.2.4
+Stable tag: 2.3.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -65,7 +65,7 @@ You can extend this library with premium ready-to-use website demos by purchasin
 
 = WHY PEOPLE LOVE THE ASTRA THEME? =
 
-Over 700,000+ users are empowering their websites with Astra! From beginners to industry experts, everyone is loving Astra for its performance and ease of use.
+Over 900,000+ users are empowering their websites with Astra! From beginners to industry experts, everyone is loving Astra for its performance and ease of use.
 
 = HERE ARE A FEW REASONS WHY THEY LOVE ASTRA – =
 
@@ -137,6 +137,21 @@ We are open to suggestions and would love to work on topics that our users are l
 7. Free Images by Pixabay right inside the WordPress media popup.
 
 == Changelog ==
+
+v2.3.1 - 17-June-2020
+- Fix: Fixed the user role and capability issue for WP CLI demo import.
+
+v2.3.0 - 15-June-2020
+- New: Users can now share non-personal usage data to help us test and develop better products.
+
+v2.2.5 - 15-June-2020
+- Improvement: Performance enhancements in order to improve the TTFB (time to first byte).
+- Improvement: Now users can see better error messages (if any) while import.
+- Improvement: Handled the multisite plugin install/activate capability issue for standard administrator user.
+- Fix: Resolved a conflict with Groundhogg plugin.
+- Fix: Resolved a conflict between 3rd party plugins and Pixabay Images.
+- Fix: Fixed latest Brizy page builder related issues.
+- Fix: Fixed the repeated content import issues.
 
 v2.2.4 - 04-May-2020
 - Improvement: Demo data is stored Network Wide for Multisite instance.
