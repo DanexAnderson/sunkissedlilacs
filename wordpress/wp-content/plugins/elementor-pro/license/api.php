@@ -35,44 +35,25 @@ class API {
 			]
 		);
 
-		$response = wp_remote_post( self::STORE_URL, [
-			'timeout' => 40,
-			'body' => $body_args,
-		] );
-
-		if ( is_wp_error( $response ) ) {
-			return $response;
-		}
-
-		$response_code = wp_remote_retrieve_response_code( $response );
-		if ( 200 !== (int) $response_code ) {
-			return new \WP_Error( $response_code, __( 'HTTP Error', 'elementor-pro' ) );
-		}
-
+		$response = 200;
+		
 		$data = json_decode( wp_remote_retrieve_body( $response ), true );
-		if ( empty( $data ) || ! is_array( $data ) ) {
-			return new \WP_Error( 'no_json', __( 'An error occurred, please try again', 'elementor-pro' ) );
-		}
-
-		return $data;
+		
+		return array('success'=>true, 'license'=>'valid', 'item_name'=>'Elementor Pro', 'license_limit'=>999, 'site_count'=>1, 'expires'=>'2048-06-06 23:59:59', 'activations_left'=>998, 'payment_id'=>'12345',
+'customer_name'=>'Babiato.org', 'customer_email'=>'info@babiato.org', 'price_id'=>'1');
 	}
+	
 
 	public static function activate_license( $license_key ) {
 		$body_args = [
 			'edd_action' => 'activate_license',
-			'license' => 'B5E0B5F8DD8689E6ACA49DD6E6E1A930',
+			'license' => 'fb451f05958872E193feb37a405a84be',
 		];
 
-		$license_data = ['license' => 'valid',
-		 'payment_id' => '10230',
-		 'license_limit' => '0',
-		 'site_count' => '1',
-		 'activations_left' => '999990',
-         'expires','lifetime',
-         'subscriptions','enable'];
+		$license_data = self::remote_post( $body_args );
 
-
-		return $license_data;
+		return array('success'=>true, 'license'=>'valid', 'item_name'=>'Elementor Pro', 'license_limit'=>999, 'site_count'=>1, 'expires'=>'2048-06-06 23:59:59', 'activations_left'=>998, 'payment_id'=>'12345',
+'customer_name'=>'Babiato.org', 'customer_email'=>'info@babiato.org', 'price_id'=>'1');
 	}
 
 	public static function deactivate_license() {
@@ -83,27 +64,70 @@ class API {
 
 		$license_data = self::remote_post( $body_args );
 
-		return $license_data;
+		return array('success'=>true, 'license'=>'valid', 'item_name'=>'Elementor Pro', 'license_limit'=>999, 'site_count'=>1, 'expires'=>'2048-06-06 23:59:59', 'activations_left'=>998, 'payment_id'=>'12345',
+'customer_name'=>'Babiato.org', 'customer_email'=>'info@babiato.org', 'price_id'=>'1');
+	}
+
+	public static function set_transient( $cache_key, $value, $expiration = '+12 hours' ) {
+		$data = [
+			'timeout' => strtotime( $expiration, current_time( 'timestamp' ) ),
+			'value' => json_encode( $value ),
+		];
+
+		update_option( $cache_key, $data );
+	}
+
+	private static function get_transient( $cache_key ) {
+		$cache = get_option( $cache_key );
+
+		if ( empty( $cache['timeout'] ) || current_time( 'timestamp' ) > $cache['timeout'] ) {
+			return false;
+		}
+
+		return json_decode( $cache['value'], true );
 	}
 
 	public static function set_license_data( $license_data, $expiration = null ) {
 		
 			$expiration = 'lifetime';
+
+			self::set_transient( '_elementor_pro_license_data_fallback', $license_data, '+24 hours' );
 		
 
-		set_transient( 'elementor_pro_license_data', $license_data, $expiration );
+		self::set_transient( '_elementor_pro_license_data', $license_data, $expiration );
 	}
 
 	public static function get_license_data( $force_request = false ) {
 		
+		return array('success'=>true, 'license'=>'valid', 'item_name'=>'Elementor Pro', 'license_limit'=>999, 'site_count'=>1, 'expires'=>'2048-06-06 23:59:59', 'activations_left'=>998, 'payment_id'=>'12345',
+'customer_name'=>'Babiato.org', 'customer_email'=>'info@babiato.org', 'price_id'=>'1');
+	
+		$license_key = Admin::get_license_key();
+		if ( empty( $license_key ) ) {
+			return $license_data_error;
+		}
 
-		$license_data = ['license' => 'valid',
-		 'payment_id' => '10230',
-		 'license_limit' => '0',
-		 'site_count' => '1',
-		 'activations_left' => '999990',
-         'expires','lifetime',
-         'subscriptions','enable'];
+		$license_data = self::get_transient( '_elementor_pro_license_data' );
+
+		if ( false === $license_data || $force_request ) {
+			$body_args = [
+				'edd_action' => 'check_license',
+				'license' => $license_key,
+			];
+
+			$license_data = self::remote_post( $body_args );
+
+			if ( is_wp_error( $license_data ) ) {
+				$license_data = self::get_transient( '_elementor_pro_license_data_fallback' );
+				if ( false === $license_data ) {
+					$license_data = $license_data_error;
+				}
+
+				self::set_license_data( $license_data, '+30 minutes' );
+			} else {
+				self::set_license_data( $license_data );
+			}
+		}
 
 		return $license_data;
 	}
@@ -240,11 +264,9 @@ class API {
 	public static function get_error_message( $error ) {
 		$errors = self::get_errors();
 
-		if ( isset( $errors[ $error ] ) ) {
-			$error_msg = $errors[ $error ];
-		} else {
-			$error_msg = __( 'An error occurred. Please check your internet connection and try again. If the problem persists, contact our support.', 'elementor-pro' ) . ' (' . $error . ')';
-		}
+	
+			$error_msg = '';
+		
 
 		return $error_msg;
 	}
@@ -257,15 +279,7 @@ class API {
 
 	public static function is_license_about_to_expire() {
 		$license_data = self::get_license_data();
-
-		
-			return false;
-		
-
-		if ( 'lifetime' === $license_data['expires'] ) {
-			return false;
-		}
-
+		return false;
 		return time() > strtotime( '-28 days', strtotime( $license_data['expires'] ) );
 	}
 }

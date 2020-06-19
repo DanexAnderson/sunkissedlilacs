@@ -8,7 +8,6 @@ use ElementorPro\Plugin;
 if ( ! defined( 'ABSPATH' ) ) {
 	exit; // Exit if accessed directly.
 }
-update_option( 'elementor_pro_license_key','B5E0B5F8DD8689E6ACA49DD6E6E1A930');
 
 class Admin {
 
@@ -196,14 +195,7 @@ class Admin {
 						</a>
 					</div>
 				<?php else :
-					$license_data = ['license' => 'valid',
-		            'payment_id' => '10230',
-		            'license_limit' => '0',
-		            'site_count' => '1',
-		            'activations_left' => '999990',
-                    'expires','lifetime',
-                    'subscriptions','enable'];
-					?>
+					$license_data = API::get_license_data( true ); ?>
 					<h3><?php _e( 'Status', 'elementor-pro' ); ?>:
 						<?php if ( API::STATUS_EXPIRED === $license_data['license'] ) : ?>
 							<span style="color: #ff0000; font-style: italic;"><?php _e( 'Expired', 'elementor-pro' ); ?></span>
@@ -329,21 +321,33 @@ class Admin {
 			return;
 		}
 
-				
-		$license_data = ['license' => 'valid',
-		 'payment_id' => '10230',
-		 'license_limit' => '0',
-		 'site_count' => '1',
-		 'activations_left' => '999990',
-         'expires','lifetime',
-         'subscriptions','enable'];
+		$license_data = API::get_license_data();
+		if ( empty( $license_data['license'] ) ) {
+			return;
+		}
 
-		
-		
-		$errors = '';
+		$errors = self::get_errors_details();
 
-		
-		
+		if ( isset( $errors[ $license_data['license'] ] ) ) {
+			$error_data = $errors[ $license_data['license'] ];
+			$this->print_admin_message( $error_data['title'], $error_data['description'], $error_data['button_text'], $error_data['button_url'] );
+
+			return;
+		}
+
+		if ( API::is_license_active() ) {
+			if ( API::is_license_about_to_expire() ) {
+				$title = sprintf( __( 'Your License Will Expire in %s.', 'elementor-pro' ), human_time_diff( current_time( 'timestamp' ), strtotime( $license_data['expires'] ) ) );
+
+				if ( isset( $license_data['renewal_discount'] ) && 0 < $license_data['renewal_discount'] ) {
+					$description = sprintf( __( '<a href="%1$s" target="_blank">Renew your license today</a>, and get an exclusive, time-limited %2$s discount.', 'elementor-pro' ), $renew_url, $license_data['renewal_discount'] . '%' );
+				} else {
+					$description = sprintf( __( '<a href="%s" target="_blank">Renew now and enjoy updates</a>, support and Pro templates for another year.', 'elementor-pro' ), $renew_url );
+				}
+
+				$this->print_admin_message( $title, $description, __( 'Renew License', 'elementor-pro' ), $renew_url );
+			}
+		}
 	}
 
 	public function filter_library_get_templates_args( $body_args ) {
@@ -460,16 +464,7 @@ class Admin {
 					<p class="description"><?php printf( __( 'Your license key should look something like this: %s', 'elementor-pro' ), '<code>fb351f05958872E193feb37a505a84be</code>' ); ?></p>
 
 				<?php else :
-					
-					$license_data = ['license' => 'valid',
-		            'payment_id' => '10230',
-		            'license_limit' => '0',
-		            'site_count' => '1',
-		            'activations_left' => '999990',
-                     'expires','lifetime',
-                     'subscriptions','enable'];
-
-					?>
+					$license_data = API::get_license_data( true ); ?>
 					<input type="hidden" name="action" value="elementor_pro_deactivate_license"/>
 
 					<label for="elementor-pro-license-key"><?php _e( 'Your License Key', 'elementor-pro' ); ?>:</label>
@@ -525,7 +520,7 @@ class Admin {
 	}
 
 	private function is_connected() {
-		return true;
+		return $this->get_app()->is_connected();
 	}
 
 	public function get_connect_url( $params = [] ) {
