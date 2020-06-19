@@ -1,0 +1,8 @@
+
+1. Photo Gallery
+2. LightBox
+3. File Upload
+4. Search Files
+5. Category Display
+6. Carousel columns 
+

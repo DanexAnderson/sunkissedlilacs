@@ -91,6 +91,7 @@ services:
      restart: unless-stopped
      volumes:
        - ${WORDPRESS_DATA_DIR:-./wordpress}:/var/www/html
+       - ./uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
      environment:
        WORDPRESS_DB_HOST: ${CONTAINER_DB_NAME:-mysql}
        WORDPRESS_DB_NAME: ${MYSQL_DATABASE:-sunkissedlilacs}
