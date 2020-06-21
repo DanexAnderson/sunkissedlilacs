@@ -117,6 +117,7 @@ services:
      environment:
        PMA_HOST: mysql
        MYSQL_ROOT_PASSWORD: Kn0x2@@5
+       UPLOAD_LIMIT: 30000000000
 
   redis:
      image: redis:alpine
